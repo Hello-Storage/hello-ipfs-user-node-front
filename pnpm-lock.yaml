@@ -17,6 +17,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      tauri-plugin-autostart-api:
+        specifier: github:tauri-apps/tauri-plugin-autostart#v1
+        version: https://codeload.github.com/tauri-apps/tauri-plugin-autostart/tar.gz/1e02acce1b4bb5ee461f7670012d7d105a13be4c
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^1
@@ -622,6 +625,10 @@ packages:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
 
+  tauri-plugin-autostart-api@https://codeload.github.com/tauri-apps/tauri-plugin-autostart/tar.gz/1e02acce1b4bb5ee461f7670012d7d105a13be4c:
+    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-autostart/tar.gz/1e02acce1b4bb5ee461f7670012d7d105a13be4c}
+    version: 0.0.0
+
   to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
     engines: {node: '>=4'}
@@ -1191,6 +1198,10 @@ snapshots:
   supports-color@5.5.0:
     dependencies:
       has-flag: 3.0.0
+
+  tauri-plugin-autostart-api@https://codeload.github.com/tauri-apps/tauri-plugin-autostart/tar.gz/1e02acce1b4bb5ee461f7670012d7d105a13be4c:
+    dependencies:
+      '@tauri-apps/api': 1.6.0
 
   to-fast-properties@2.0.0: {}
 
