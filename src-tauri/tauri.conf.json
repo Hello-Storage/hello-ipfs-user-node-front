@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "Hello Node",
-    "version": "0.0.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -25,11 +25,16 @@
         "save": false
       }
     },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
     "windows": [
       {
         "title": "Hello Node",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "resizable": false
       }
     ],
     "security": {
