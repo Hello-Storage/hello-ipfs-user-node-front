@@ -4,19 +4,17 @@ import { enable, isEnabled, disable } from "tauri-plugin-autostart-api";
 import "./App.css";
 
 function App() {
-	const [greetMsg, setGreetMsg] = useState("");
-	const [name, setName] = useState("");
 	const [enabled, setEnabled] = useState(false);
 
 	async function greet() {
-		setGreetMsg(await invoke("greet", { name }));
+		await invoke("executeEcho");
 	}
 
 	useEffect(() => {
 		isEnabled().then((e) => {
 			if (e) {
 				setEnabled(true);
-			} 
+			}
 		});
 	}, []);
 
@@ -32,26 +30,16 @@ function App() {
 		}
 	}
 
+	window.FunctionOutputLogger = function (msg: string) {
+		console.log(msg);
+	};
+
 	return (
 		<div className="container">
-			<form
-				className="row"
-				onSubmit={(e) => {
-					e.preventDefault();
-					greet();
-				}}
-			>
-				<input
-					id="greet-input"
-					onChange={(e) => setName(e.currentTarget.value)}
-					placeholder="Enter a name..."
-				/>
-				<button type="submit">Greet</button>
-			</form>
-
-			<button onClick={switchAutostart}>{enabled ? "Disable autostart" : "Enable autostart"}</button>
-
-			<p>{greetMsg}</p>
+			<button onClick={switchAutostart}>
+				{enabled ? "Disable autostart" : "Enable autostart"}
+			</button>
+			<button onClick={greet}>test</button>
 		</div>
 	);
 }
