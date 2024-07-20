@@ -22,10 +22,13 @@ fn logger(message: String, js_function: String) {
         }
     }
 }
+
 #[allow(non_snake_case)]
 #[tauri::command]
-fn executeEcho(){
-    match run_command_with_logging("echo", &["hello"], logger) {
+fn executeCommand(command: String, args: Vec<String>) {
+    // convert from Vec<String> to Vec<&str> (required by run_command_with_logging)
+    let parsed_args: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    match run_command_with_logging(command.as_str(), parsed_args.as_slice(), logger) {
         Ok(_) => println!("Command executed successfully"),
         Err(e) => println!("Failed to execute command: {}", e),
     }
@@ -36,17 +39,26 @@ fn main() {
     // creating a menu for the system tray, with a quit option (add more options later if needed)
     let quit = CustomMenuItem::new("quit".to_string(), "Quit").accelerator("Cmd+Q");
 
+    // creating the system tray menu with the quit option
     let system_tray_menu = SystemTrayMenu::new().add_item(quit);
+
+    // title of the system tray
+    let tray_title = "Hello Node";
+
+    // creating the tauri application
     tauri::Builder::default()
         .setup(|app| {
+            //saving the main window in a mutex to use it later globally
             let main_window = app.get_window("main").unwrap();
             *MAIN_WINDOW.lock().unwrap() = Some(main_window);
             Ok(())
         })
+        // setting the system tray menu plugin
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec![]),
         ))
+        // hide to tray when the main window is closed
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 event.window().hide().unwrap();
@@ -54,7 +66,9 @@ fn main() {
             }
             _ => {}
         })
-        .system_tray(SystemTray::new().with_menu(system_tray_menu))
+        // setting the system tray
+        .system_tray(SystemTray::new().with_tooltip(tray_title).with_menu(system_tray_menu))
+        // opening the main window when the system tray is clicked
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::LeftClick {
                 position: _,
@@ -70,6 +84,7 @@ fn main() {
                     window.set_focus().unwrap();
                 }
             }
+            // handling the quit option
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
                     std::process::exit(0);
@@ -78,7 +93,8 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![executeEcho])
+        // tauri commands (to use in the frontend)
+        .invoke_handler(tauri::generate_handler![executeCommand])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

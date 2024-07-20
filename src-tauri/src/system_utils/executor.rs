@@ -11,7 +11,10 @@ pub fn run_command_with_logging(
     args: &[&str],
     logger: Logger,
 ) -> std::io::Result<()> {
-    println!("executing {} {}", command, args.join(" "));
+    let alert = format!("executing {} {}", command, args.join(" "));
+
+    println!("{}", alert);
+    logger(alert.to_string(), "FunctionOutputLogger".to_string());
 
     let shell = if cfg!(windows) { "cmd" } else { "sh" };
 
@@ -54,7 +57,6 @@ pub fn run_command_with_logging(
     });
 
     for line in rx {
-        println!("{}", line);
         logger(line, "FunctionOutputLogger".to_string());
     }
 
