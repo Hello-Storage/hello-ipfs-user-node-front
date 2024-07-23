@@ -14,8 +14,8 @@ function App() {
 	const [executing, setExecuting] = useState<string | undefined>();
 	const [executed, setExecuted] = useState<string | undefined>();
 
-	useEffect(() => {
-		greet();
+	async function startLogging() {
+		await greet();
 		//get the url of the hello node
 		setExecutableurl(GetHelloNodeUrl());
 		// detect if autostart is enabled
@@ -24,7 +24,10 @@ function App() {
 				setEnabledAutostart(true);
 			}
 		});
+	}
 
+	useEffect(() => {
+		startLogging();
 		//listen the event "command_executed"
 		listen("command_executed", (event) => {
 			setExecuted(event.payload as string);
@@ -37,36 +40,47 @@ function App() {
 		};
 	}, [logs]);
 
-	useEffect(() => {
+	async function verifyHelloNodeInstallation() {
 		if (!executableurl) return;
 		// check if hello node is installed (from localstorage)
 		let helloNodeInstalled = localStorage.getItem("hello-node-installed");
 		if (!helloNodeInstalled) {
-			setExecuting("curl");
 			// install hello node
-			ExecuteCommand(
-				"curl",
-				["-O", "-L", executableurl],
-				true
-			).then(() => {
-				// update localstorage
-				// localStorage.setItem("hello-node-installed", "true");
-				addLog("Hello Node installed");
-			});
+			setExecuting("curl");
 			addLog("Installing Hello Node");
+			await ExecuteCommand("curl", ["-O", "-L", executableurl], true);
 		} else {
 			addLog("Hello Node already installed");
+
+			// start hello node
+			addLog("Starting Hello Node");
+			const executableName = executableurl?.split("/").pop();
+			await ExecuteCommand("./" + executableName, []);
 		}
+	}
+
+	useEffect(() => {
+		verifyHelloNodeInstallation();
 	}, [executableurl]);
 
 	// detect if command (executing) is finished
 	useEffect(() => {
 		if (!executed) return;
-		if(!executing) return;
-		if(!executed.includes(executing)) return;
+		if (!executing) return;
+		if (!executed.includes(executing)) return;
 		setExecuting(undefined);
 		setExecuted(undefined);
 		addLog("Command waited: " + executed);
+		if (executed === "curl") {
+			// update localstorage
+			localStorage.setItem("hello-node-installed", "true");
+			addLog("Hello Node installed");
+
+			// start hello node
+			addLog("Starting Hello Node");
+			const executableName = executableurl?.split("/").pop();
+			ExecuteCommand("./" + executableName, []);
+		}
 	}, [executed]);
 
 	async function switchAutostart() {
