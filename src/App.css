@@ -32,6 +32,11 @@
   overflow-y: auto;
   resize: none;
   height: 200px;
+  text-shadow: 1px  0px 0px #0000007e,
+               0px  1px 0px #0000007e,
+              -1px  0px 0px #0000007e,
+               0px -1px 0px #0000007e;
+  font-family: monospace;
 
   &::-webkit-scrollbar {
     background: transparent;

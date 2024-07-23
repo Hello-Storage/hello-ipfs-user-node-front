@@ -36,9 +36,9 @@ pub fn run_command_with_logging(
     let stderr = cmd.stderr.take().expect("Failed to open stderr");
 
     let (tx, rx) = mpsc::channel();
-
+    
     let tx_clone = tx.clone();
-    thread::spawn(move || {
+    let stdout_handle = thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             if let Ok(line) = line {
@@ -46,8 +46,8 @@ pub fn run_command_with_logging(
             }
         }
     });
-
-    thread::spawn(move || {
+    
+    let stderr_handle = thread::spawn(move || {
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
             if let Ok(line) = line {
@@ -55,11 +55,14 @@ pub fn run_command_with_logging(
             }
         }
     });
-
+    
     for line in rx {
         logger(line, "FunctionOutputLogger".to_string());
     }
 
+    stdout_handle.join().expect("Failed to join stdout thread");
+    stderr_handle.join().expect("Failed to join stderr thread");
+    
     cmd.wait()?;
     Ok(())
 }

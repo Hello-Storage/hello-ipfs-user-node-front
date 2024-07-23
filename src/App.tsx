@@ -3,54 +3,71 @@ import { enable, isEnabled, disable } from "tauri-plugin-autostart-api";
 import "./App.css";
 import "./assets/styles/wave.css";
 import "./assets/styles/card.css";
-import { ExecuteCommand } from "./utils/CommandUtils";
+import { ExecuteCommand, GetHelloNodeUrl, greet } from "./utils/CommandUtils";
+import { useLogs } from "./assets/globalHooks/useLogs";
+import { listen } from "@tauri-apps/api/event";
 
 function App() {
 	const [enabledAutostart, setEnabledAutostart] = useState(false);
-	const [logs, setLogs] = useState("");
-	const executableurl =
-		"https://github.com/Hello-Storage/hello-ipfs-user-node/releases/download/0.0.1/ipfs-user-node-windows-0.0.1.exe";
-
-	async function greet() {
-		await ExecuteCommand("echo", ["Hello there from hello.app!"]);
-	}
-
-	useEffect(() => {
-		window.FunctionOutputLogger = function (msg: string) {
-			// update logs
-			setLogs(logs + msg + "\n");
-			// scroll to bottom
-			const textarea = document.getElementById("logs");
-			if (textarea) {
-				textarea.scrollTop = textarea.scrollHeight + 100;
-			}
-		};
-	}, [logs]);
+	const { logs, addLog } = useLogs();
+	const [executableurl, setExecutableurl] = useState<string | undefined>();
+	const [executing, setExecuting] = useState<string | undefined>();
+	const [executed, setExecuted] = useState<string | undefined>();
 
 	useEffect(() => {
 		greet();
-
-		// check if hello node is installed (from localstorage)
-		let helloNodeInstalled = localStorage.getItem("hello-node-installed");
-		if (!helloNodeInstalled) {
-			// install hello node
-			ExecuteCommand("curl", ["-O", "-L", executableurl]).then(() => {
-				// update localstorage
-				localStorage.setItem("hello-node-installed", "true");
-			});
-			setLogs(logs + "Hello Node installed\n");
-		} else {
-			setLogs(logs + "Hello Node already installed\n");
-		}
-
+		//get the url of the hello node
+		setExecutableurl(GetHelloNodeUrl());
 		// detect if autostart is enabled
 		isEnabled().then((e) => {
 			if (e) {
 				setEnabledAutostart(true);
 			}
 		});
-		//
+
+		//listen the event "command_executed"
+		listen("command_executed", (event) => {
+			setExecuted(event.payload as string);
+		});
 	}, []);
+
+	useEffect(() => {
+		window.FunctionOutputLogger = function (msg: string) {
+			addLog(msg);
+		};
+	}, [logs]);
+
+	useEffect(() => {
+		if (!executableurl) return;
+		// check if hello node is installed (from localstorage)
+		let helloNodeInstalled = localStorage.getItem("hello-node-installed");
+		if (!helloNodeInstalled) {
+			setExecuting("curl");
+			// install hello node
+			ExecuteCommand(
+				"curl",
+				["-O", "-L", executableurl],
+				true
+			).then(() => {
+				// update localstorage
+				// localStorage.setItem("hello-node-installed", "true");
+				addLog("Hello Node installed");
+			});
+			addLog("Installing Hello Node");
+		} else {
+			addLog("Hello Node already installed");
+		}
+	}, [executableurl]);
+
+	// detect if command (executing) is finished
+	useEffect(() => {
+		if (!executed) return;
+		if(!executing) return;
+		if(!executed.includes(executing)) return;
+		setExecuting(undefined);
+		setExecuted(undefined);
+		addLog("Command waited: " + executed);
+	}, [executed]);
 
 	async function switchAutostart() {
 		if (await isEnabled()) {
@@ -74,7 +91,7 @@ function App() {
 			</section>
 
 			<div className="bgblue">
-				<div className="card">
+				<div className="log-card">
 					<textarea
 						name="logs"
 						id="logs"
